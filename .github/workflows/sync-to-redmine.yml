@@ -30,6 +30,11 @@ jobs:
           # Status IDs verified below
           
           if [ "$GITHUB_ACTION" = "opened" ]; then
+            echo "🔍 Creating Redmine issue for GH-$GITHUB_ISSUE_NUMBER..."
+            echo "   Project ID: $PROJECT_ID"
+            echo "   Tracker ID: $TRACKER_ID"
+            echo "   Redmine URL: $REDMINE_URL"
+            
             # Create new Redmine issue
             RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
               -H "Content-Type: application/json" \
@@ -46,6 +51,9 @@ jobs:
             
             HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
             BODY=$(echo "$RESPONSE" | head -n-1)
+            
+            echo "📊 Response HTTP Code: $HTTP_CODE"
+            echo "📄 Response Body: $BODY"
             
             if [ "$HTTP_CODE" = "201" ]; then
               REDMINE_ID=$(echo "$BODY" | jq -r '.issue.id')
