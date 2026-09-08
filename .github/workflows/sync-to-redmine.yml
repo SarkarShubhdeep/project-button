@@ -18,6 +18,8 @@ jobs:
           GITHUB_ISSUE_STATE: ${{ github.event.issue.state }}
           GITHUB_ISSUE_URL: ${{ github.event.issue.html_url }}
           GITHUB_ACTION: ${{ github.event.action }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           # Project Button project ID
           PROJECT_ID=1
@@ -49,9 +51,12 @@ jobs:
               REDMINE_ID=$(echo "$BODY" | jq -r '.issue.id')
               echo "✓ Created Redmine issue #$REDMINE_ID"
               
-              # Update GitHub issue with Redmine link
-              gh issue comment $GITHUB_ISSUE_NUMBER \
-                --body "🔗 Synced to Redmine: $REDMINE_URL/issues/$REDMINE_ID"
+              # Update GitHub issue with Redmine link using GitHub API
+              curl -X POST \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                -d "{\"body\":\"🔗 Synced to Redmine: $REDMINE_URL/issues/$REDMINE_ID\"}" \
+                "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$GITHUB_ISSUE_NUMBER/comments"
             else
               echo "✗ Failed to create issue (HTTP $HTTP_CODE)"
               echo "$BODY"
@@ -84,11 +89,3 @@ jobs:
               echo "⚠ No matching Redmine issue found for GH-$GITHUB_ISSUE_NUMBER"
             fi
           fi
-      
-      - name: Setup gh CLI for commenting
-        if: github.event.action == 'opened'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # gh CLI is pre-installed on ubuntu-latest runners
-          echo "gh CLI ready"
