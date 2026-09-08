@@ -1,0 +1,42 @@
+name: Simple Redmine Sync Test
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Redmine Issue
+        run: |
+          echo "Testing Redmine API..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Redmine-API-Key: ${{ secrets.REDMINE_API_KEY }}" \
+            -d '{"issue":{"project_id":1,"tracker_id":2,"subject":"[GH-${{ github.event.issue.number }}] ${{ github.event.issue.title }}"}}' \
+            "${{ secrets.REDMINE_URL }}/issues.json")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "HTTP Code: $HTTP_CODE"
+          echo "Body: $BODY"
+          
+          if [ "$HTTP_CODE" = "201" ]; then
+            echo "SUCCESS!"
+            ISSUE_ID=$(echo "$BODY" | jq -r '.issue.id')
+            echo "Created Redmine issue #$ISSUE_ID"
+            
+            # Comment on GitHub
+            curl -X POST \
+              -H "Authorization: Bearer ${{ github.token }}" \
+              -H "Accept: application/vnd.github+json" \
+              -d "{\"body\":\"Redmine: ${{ secrets.REDMINE_URL }}/issues/${ISSUE_ID}\"}" \
+              "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments"
+          else
+            echo "FAILED with code $HTTP_CODE"
+            echo "$BODY"
+            exit 1
+          fi
