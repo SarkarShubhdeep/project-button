@@ -34,9 +34,10 @@ jobs:
             echo "   Project ID: $PROJECT_ID"
             echo "   Tracker ID: $TRACKER_ID"
             echo "   Redmine URL: $REDMINE_URL"
+            echo "   API Key length: ${#REDMINE_API_KEY}"
             
             # Create new Redmine issue
-            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            RESPONSE=$(curl -v -w "\n%{http_code}" -X POST \
               -H "Content-Type: application/json" \
               -H "X-Redmine-API-Key: $REDMINE_API_KEY" \
               -d "{
