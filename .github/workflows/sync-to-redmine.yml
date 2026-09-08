@@ -31,13 +31,9 @@ jobs:
           
           if [ "$GITHUB_ACTION" = "opened" ]; then
             echo "🔍 Creating Redmine issue for GH-$GITHUB_ISSUE_NUMBER..."
-            echo "   Project ID: $PROJECT_ID"
-            echo "   Tracker ID: $TRACKER_ID"
-            echo "   Redmine URL: $REDMINE_URL"
-            echo "   API Key length: ${#REDMINE_API_KEY}"
             
-            # Create new Redmine issue
-            RESPONSE=$(curl -v -w "\n%{http_code}" -X POST \
+            # Create new Redmine issue (description omitted to avoid JSON parsing issues)
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
               -H "Content-Type: application/json" \
               -H "X-Redmine-API-Key: $REDMINE_API_KEY" \
               -d "{
@@ -45,7 +41,7 @@ jobs:
                   \"project_id\": $PROJECT_ID,
                   \"tracker_id\": $TRACKER_ID,
                   \"subject\": \"[GH-$GITHUB_ISSUE_NUMBER] $GITHUB_ISSUE_TITLE\",
-                  \"description\": \"Synced from GitHub Issue #$GITHUB_ISSUE_NUMBER\n\n$GITHUB_ISSUE_BODY\n\n---\nGitHub URL: $GITHUB_ISSUE_URL\"
+                  \"description\": \"Synced from GitHub: $GITHUB_ISSUE_URL\"
                 }
               }" \
               "$REDMINE_URL/issues.json")
